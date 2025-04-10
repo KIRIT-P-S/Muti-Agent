@@ -108,11 +108,6 @@ elif option == "Image Generator 🎨":
 
     st.write("Click below to open the image generator.")
 
-    if st.button("Generate Image"):
-        # Open the image generator in the default web browser
-        webbrowser.open("http://127.0.0.1:7860/")
-        st.success("Opening Image Generator...")
-
 
 
 
