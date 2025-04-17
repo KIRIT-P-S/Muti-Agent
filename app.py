@@ -1,8 +1,6 @@
 import os
 import webbrowser
-
 import streamlit as st
-import subprocess
 from dotenv import load_dotenv
 from phi.agent import Agent
 from phi.model.google import Gemini
@@ -23,30 +21,44 @@ option = st.sidebar.radio(
     ["Shopping Assistant 🛍️", "Finance & Stocks 📈", "General Knowledge 🔍", "Image Generator 🎨"]
 )
 
-# ---- Shopping Assistant ----
 if option == "Shopping Assistant 🛍️":
     st.header("🛍️ Shopping Assistant")
-    
+
+    user_location = st.text_input("📍 Enter your location (city or area):", placeholder="e.g., Coimbatore")
+
     shopping_agent = Agent(
         name="Shopping Partner",
         model=Gemini(id="gemini-2.0-flash-exp"),
         instructions=[
-            "You are a product recommender specializing in trusted platforms like Amazon, Flipkart, Myntra, and Nike.",
-            "Ensure the product is available and meets user criteria (minimum 50% match).",
-            "Clearly display key attributes (price, brand, features) in an easy-to-read format.",
+            "You are a smart shopping assistant that searches the web for products based on user preferences like product type, budget, and city.",
+            "If the user query is general (like 'shoes under 2000 in Coimbatore'), split the recommendations into three categories: Men, Women, and Kids.",
+            "Under each category, divide products into Online Stores and Offline Stores.",
+            "For Online Stores:",
+            "- List product name, price, website/store name, and delivery date to the specified location (if available).",
+            "- Include trusted and emerging platforms (e.g., Amazon, Flipkart, Ajio, etc).",
+            "For Offline Stores:",
+            "- List product name, price, store name, and approximate address in the city mentioned.",
+            "Use only public data found on the web.",
+            "Only show 2-3 top results per section.",
+            "Ensure product match is at least 70%.",
+            "Use headings like: '### 👟 For Men', '#### 🛒 Online Stores', '#### 🏪 Offline Stores'.",
+            "No unnecessary text — keep it clean and structured."
         ],
         tools=[FirecrawlTools(api_key=FIRECRAWL_API_KEY)],
     )
 
-    user_query = st.text_area("Enter your shopping preferences:")
-    
-    if st.button("Find Products"):
-        with st.spinner("Searching for products..."):
-            response = shopping_agent.run(user_query)
-            st.markdown("## 🛒 Recommended Products")
-            st.markdown(response.content if hasattr(response, 'content') else str(response))
+    user_query = st.text_area("Enter your shopping preferences:", placeholder="e.g., I need a shoe under 2000 in Coimbatore")
 
-# ---- Finance & Stocks ----
+    if st.button("Find Products"):
+        if not user_query or not user_location:
+            st.warning("Please enter both your shopping preferences and your location.")
+        else:
+            with st.spinner("Searching for products..."):
+                full_query = f"{user_query.strip()} in {user_location.strip()}"
+                response = shopping_agent.run(full_query)
+                st.markdown("## 🛒 Recommended Products")
+                st.markdown(response.content if hasattr(response, 'content') else str(response))
+
 elif option == "Finance & Stocks 📈":
     st.header("📈 Finance & Stock Market")
 
@@ -77,7 +89,6 @@ elif option == "Finance & Stocks 📈":
             st.markdown("## 📊 Finance Insights")
             st.markdown(response.content if hasattr(response, 'content') else str(response))
 
-# ---- General Knowledge Search ----
 elif option == "General Knowledge 🔍":
     st.header("Real Time LLM Feeder")
 
@@ -101,16 +112,17 @@ elif option == "General Knowledge 🔍":
             st.markdown("## 🌍 Answer")
             st.markdown(response.content if hasattr(response, 'content') else str(response))
 
-# ---- Image Generator (Runs `run.bat`) ----
-
 elif option == "Image Generator 🎨":
     st.header("🎨 AI Image Generator")
 
     st.write("Click below to open the image generator.")
 
+    if st.button("Generate Image"):
+        webbrowser.open("http://127.0.0.1:7860/")
+        st.success("Opening Image Generator...")
 
-
-
-# ---- Debug Info in Sidebar ----
 st.sidebar.header("🔧 Debug Info")
 st.sidebar.write("Debug mode is enabled for detailed responses.")
+
+st.sidebar.markdown("### Share this App:")
+st.sidebar.markdown("[Click Here to Visit the App](https://muti-agent.streamlit.app/)")
